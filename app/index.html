@@ -3,21 +3,143 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cover Snap</title>
+<meta name="description" content="Leonida Press turns any photo and caption into GTA-style multi-panel cover art, offline in the browser, exported as a PNG.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23ff5e3a'/%3E%3Ctext x='16' y='23' font-family='Arial Black, sans-serif' font-size='15' font-weight='900' text-anchor='middle' fill='%2314100e'%3ELP%3C/text%3E%3C/svg%3E">
+<title>Leonida Press — GTA-style Cover Art Studio</title>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<main class="app">
-  <section class="controls">
-    <h1>Cover Snap</h1>
-    <p>A photo and a caption, made into a square cover.</p>
-    <label>Photo <input id="photo" type="file" accept="image/*"></label>
-    <label>Caption <input id="caption" type="text" maxlength="40" value="Sunset Heist"></label>
-    <button id="export" type="button">Export PNG 1080 x 1080</button>
-    <p id="status" role="status"></p>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">LP</span>
+    <div class="brand-text">
+      <h1>Leonida Press</h1>
+      <p>Collector&rsquo;s steelbook &amp; screenprint atelier</p>
+    </div>
+  </div>
+  <div class="badges">
+    <span class="badge">100% offline</span>
+    <span class="badge">Photos never leave this machine</span>
+    <span class="badge badge-gold">PNG export</span>
+  </div>
+</header>
+
+<main class="workspace">
+  <aside class="rail rail-left" aria-label="Cover controls">
+    <section class="panel-block" id="photos-block">
+      <h2>Photos</h2>
+      <p class="hint">Drop photos onto a panel, or pick from the tray. One photo can fill every panel.</p>
+      <label class="upload-btn" for="photo-upload">Add your photos
+        <input id="photo-upload" type="file" accept="image/*" multiple hidden>
+      </label>
+      <div class="tray" id="photo-tray" aria-label="Photo tray"></div>
+      <label class="check-row"><input id="fill-all" type="checkbox"> Fill all panels with one photo</label>
+      <div class="row">
+        <button id="shuffle-photos" type="button" class="btn btn-ghost">Shuffle photos</button>
+        <button id="sample-photos" type="button" class="btn btn-ghost">Load samples</button>
+      </div>
+    </section>
+
+    <section class="panel-block" id="layout-block">
+      <h2>Layout</h2>
+      <div class="layout-grid" id="layout-grid" role="radiogroup" aria-label="Cover layout"></div>
+    </section>
+
+    <section class="panel-block" id="grade-block">
+      <h2>Grade</h2>
+      <div class="grade-grid" id="grade-grid" role="radiogroup" aria-label="Colour grade"></div>
+      <p class="hint">1986 Vice Screenprint re-inks the cover in four flat inks with a halftone dot screen.</p>
+    </section>
+
+    <section class="panel-block" id="popout-block">
+      <h2>Break-the-frame pop-out</h2>
+      <label class="check-row"><input id="popout-toggle" type="checkbox" checked> Pop-out hero cut-out</label>
+      <p class="hint">A vector hero — drawn layer by layer, never a cut photo — breaks out of its panel with a halftone drop shadow.</p>
+      <div class="row" role="radiogroup" aria-label="Pop-out art">
+        <button type="button" class="btn btn-ghost popout-style is-on" data-style="cruiser">Cruiser</button>
+        <button type="button" class="btn btn-ghost popout-style" data-style="palms">Palm duo</button>
+        <button type="button" class="btn btn-ghost popout-style" data-style="skyline">Skyline</button>
+      </div>
+    </section>
+  </aside>
+
+  <section class="stage" aria-label="Cover preview">
+    <div class="stage-toolbar">
+      <span id="selected-panel-label" class="selected-label">Panel 1 · Hero</span>
+      <span class="stage-hint">Click a panel to pick it · drag to pan · scroll to zoom</span>
+    </div>
+    <div class="canvas-wrap" id="canvas-wrap">
+      <canvas id="preview" width="1080" height="1080" aria-label="Live cover preview"></canvas>
+    </div>
+    <div class="panel-tools" id="panel-tools">
+      <label>Zoom <input id="panel-zoom" type="range" min="1" max="2.6" step="0.01" value="1.15"></label>
+      <button id="smart-crop" type="button" class="btn btn-ghost">Smart crop · find the face</button>
+      <button id="panel-reset" type="button" class="btn btn-ghost">Reset crop</button>
+      <label class="role-label">Role tag <input id="panel-role" type="text" maxlength="18" value="The Driver"></label>
+    </div>
+    <p id="status" class="status" role="status">Ready. Pick a layout, drop in a photo, export.</p>
   </section>
-  <canvas id="cover" width="1080" height="1080" aria-label="The cover"></canvas>
+
+  <aside class="rail rail-right" aria-label="Lettering and export">
+    <section class="panel-block" id="lettering-block">
+      <h2>Lettering</h2>
+      <label class="field">Title
+        <input id="field-title" type="text" maxlength="16" value="VICE HEAT">
+      </label>
+      <label class="field">Script subtitle
+        <input id="field-subtitle" type="text" maxlength="28" value="one last summer">
+      </label>
+      <label class="field">Tagline
+        <input id="field-tagline" type="text" maxlength="48" value="FIVE FRIENDS · ONE COAST · NO WAY BACK">
+      </label>
+      <label class="field">Quote
+        <input id="field-quote" type="text" maxlength="48" value="“Pure golden-hour mayhem”">
+      </label>
+      <label class="field">Quoted by
+        <input id="field-source" type="text" maxlength="28" value="THE HARBOR GAZETTE">
+      </label>
+      <label class="field">Billing line
+        <input id="field-billing" type="text" maxlength="64" value="A SUNSET PICTURES PRODUCTION · STARRING YOU">
+      </label>
+      <label class="check-row"><input id="field-coming" type="checkbox" checked> “Coming soon” strip</label>
+    </section>
+
+    <section class="panel-block" id="size-block">
+      <h2>Post size</h2>
+      <div class="size-grid" role="radiogroup" aria-label="Export size">
+        <button type="button" class="btn size-btn is-on" data-size="1080x1080">Square · 1080 × 1080</button>
+        <button type="button" class="btn size-btn" data-size="1080x1350">Portrait · 1080 × 1350</button>
+        <button type="button" class="btn size-btn" data-size="1920x1080">Wide · 1920 × 1080</button>
+      </div>
+    </section>
+
+    <section class="panel-block" id="export-block">
+      <h2>Export</h2>
+      <button id="export-png" type="button" class="btn btn-primary">Export PNG</button>
+      <button id="export-all" type="button" class="btn btn-ghost">Export all three sizes</button>
+      <p class="hint" id="export-time">Export renders the full-size cover on this machine — usually under a second.</p>
+    </section>
+
+    <section class="panel-block" id="case-block">
+      <h2>Game case</h2>
+      <label class="check-row"><input id="case-toggle" type="checkbox"> Preview as a game case</label>
+      <div class="case-scene" id="case-scene" hidden>
+        <div class="game-case" id="game-case">
+          <div class="case-face case-front" id="case-front"></div>
+          <div class="case-face case-spine"><span>LEONIDA PRESS</span></div>
+          <div class="case-face case-back"></div>
+        </div>
+      </div>
+      <p class="hint">The case turns the live cover into a steelbook you can hold up to the light.</p>
+    </section>
+  </aside>
 </main>
-<script type="module" src="./src/main.js"></script>
+
+<footer class="foot">
+  <span>Leonida Press — original art, lettering and type. No Rockstar Games logo, artwork or font.</span>
+  <span>Anton &amp; Pacifico ship under the SIL Open Font License, see <code>fonts/OFL.txt</code>.</span>
+</footer>
+
+<script type="module" src="./src/app.js"></script>
 </body>
 </html>
